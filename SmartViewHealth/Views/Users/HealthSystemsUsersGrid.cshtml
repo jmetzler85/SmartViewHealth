@@ -1,0 +1,45 @@
+﻿
+@model SmartViewHealth.Models._HealthSystemUsersContext
+
+    <div class="table-responsive-lg">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        User Name
+                    </th>
+                    <th>
+                        Role
+                    </th>
+                    <th>
+                        Associated
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model._UserHealthSystemAssociationViewModel)
+                {
+                    <tr>
+                        <td>
+
+                            @Html.DisplayFor(modelItem => item.UserName)
+                        </td>
+                        <td>
+
+                            @Html.DisplayFor(modelItem => item.role_name)
+                        </td>
+                        <td style="align-content: center;">
+                            @if (item.association_id > 0)
+                            {
+                                <input type="checkbox" id="cbAssociate" checked onchange="AssociateUser('@item.UserId', this.checked);">
+                            }
+                            else
+                            {
+                                <input type="checkbox" id="cbAssociate" onchange="AssociateUser('@item.UserId', this.checked);">
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>

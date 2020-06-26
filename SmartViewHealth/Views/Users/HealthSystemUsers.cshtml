@@ -1,0 +1,137 @@
+﻿
+@model SmartViewHealth.Models._HealthSystemUsersContext
+
+<ol class="breadcrumb">
+    <li class="breadcrumb-item">@Html.ActionLink("Health Systems", "HealthSystems", "Admin")</li>
+    <li class="breadcrumb-item active">Users of @Model._HealthSystem.HealthSystemName</li>
+</ol>
+
+<div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000" style="position: fixed; top: 4rem; right: 1rem;">
+    <div class="toast-header">
+        <strong class="mr-auto">User Association</strong>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="toast-body">
+        <span id="toast-body-text">#</span>
+    </div>
+</div>
+
+<div style="display: flex; align-content:space-between; align-items: center; height: 45px; vertical-align: middle; padding-bottom: 5px;">
+    @using (Html.BeginForm("HealthSystemUsers", "Users"))
+    {
+        <div style="display: flex; align-content:space-between; align-items: center; height: 45px; vertical-align: middle; padding-bottom: 5px;">
+            <div>
+                <input type="text" class="form-control" placeholder="Search Users" id="txtSearch" name="searchString">
+            </div>
+            <div style="width: 5px;">
+            </div>
+            <div>
+                <input id="btnSearch" type="submit" value="Search" class="btn btn-primary" />
+            </div>
+            @if (ViewBag.ShowRefresh)
+            {
+                <div style="padding-left: 5px;">
+                    <input id="btnRefresh" type="submit" value="Refresh" class="btn btn-primary" onclick="ReloadPage(null);" />
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<div id="HealthSystemGrid">
+    @Html.Partial("HealthSystemsUsersGrid", Model)
+</div>
+
+@if (Model.Pager != null)
+{
+    <div id="FacilitiesPager">
+        @if (Model.Pager.EndPage > 1)
+        {
+            <ul class="pagination">
+                @if (Model.Pager.CurrentPage > 1)
+                {
+                    <li>
+                        <a class="page-link" href="javascript: ReloadPage(null);">First</a>
+                    </li>
+                    <li>
+                        <a class="page-link" href="javascript: ReloadPage(@(Model.Pager.CurrentPage - 1));">Previous</a>
+                    </li>
+                }
+
+                @for (var page = Model.Pager.StartPage; page <= Model.Pager.EndPage; page++)
+                {
+                    <li class="@(page == Model.Pager.CurrentPage ? "page-item active " : "page-item")">
+                        <a class="page-link" href="javascript: ReloadPage(@page);">@page</a>
+                    </li>
+                }
+
+                @if (Model.Pager.CurrentPage < Model.Pager.TotalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="javascript: ReloadPage(@(Model.Pager.CurrentPage + 1));">Next</a>
+                    </li>
+                    <li>
+                        <a class="page-link" href="javascript: ReloadPage(@(Model.Pager.TotalPages));">Last</a>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to Health Systems", "HealthSystems", "Admin")
+</div>
+
+
+@section scripts {
+    <script type="text/javascript">
+function AssociateUser(iUserId, bChecked) {
+
+    $.ajax({
+        type: "POST",
+        url: '@Url.Action("AssociateUserToHealthSystem", "Users")', // use this
+        data: {
+            hSystemId: @Model._HealthSystem.Id,
+            iUserId: iUserId,
+            bChecked: bChecked
+        },
+        dataType: 'json', // add this
+        success: function (response) {
+            if (bChecked) {
+                $("#toast-body-text").text("You have successfully added the user from this health system.");
+            }
+            else {
+                $("#toast-body-text").text("You have successfully removed the user from this health system.");
+            }
+            $(".toast").toast('show');
+        },
+        error: function (error) {
+            alert('FAILURE');
+        }
+    });
+
+}
+
+function ReloadPage(page) {
+    var url = '@Url.Action("HealthSystemUsers", "Users")';
+    if (page) {
+        url = url + '?page=' + page;
+    }
+    window.location = url;
+}
+
+$("#txtSearch").keypress(function (event) {
+    if (event.keyCode === 13) {
+        $("#btnSearch").click();
+    }
+});
+
+$(document).ready(function () {
+    //make the health systems tab "active"
+    $("#tabHealthSystems").addClass("active");
+});
+    </script>
+}

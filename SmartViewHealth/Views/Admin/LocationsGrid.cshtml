@@ -1,0 +1,55 @@
+﻿@model SmartViewHealth.Models._LocationsContext
+
+    <div class="table-responsive-lg">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        Location Name
+                    </th>
+                    <th>
+                        Facility Name
+                    </th>
+                    <th>
+                        Last Updated By
+                    </th>
+                    <th>
+                        Last Updated Date
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model._Locations)
+                {
+                    <tr>
+                        <td>
+                            @if (item.row_sta_cd == "A")
+                            {
+                                @Html.DisplayFor(modelItem => item.LocationName)
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.LocationName)
+                                <span class="badge badge-secondary">Obsolete</span>
+                            }
+                        </td>
+                        <td>
+                            @Model._Facility.FacilityName
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.lst_mod_id)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.lst_mod_ts)
+                        </td>
+                        <td>
+                            @Html.ActionLink("Edit", "EditLocation", new { id = item.Id })
+                            |
+                            @Html.ActionLink("Equipment", "Equipment", new { id = item.Id })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+     </div>

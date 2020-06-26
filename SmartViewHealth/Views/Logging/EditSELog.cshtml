@@ -1,0 +1,144 @@
+﻿@model SmartViewHealth.Models.SEEquipmentViewModel
+
+
+@using (Html.BeginForm("PutSELog", "Logging", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="ModalMessage" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Validation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <span id="mModalMessage"></span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @Html.HiddenFor(m => m._equipment.Id)
+    @Html.HiddenFor(m => m._Location.Id)
+    @Html.HiddenFor(m => m._Facility.Id)
+    @Html.HiddenFor(m => m._HealthSystem.Id)
+    @Html.HiddenFor(m => m._SE_Log.Id)
+
+    <div class="form-horizontal">
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.EquipmentName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._equipment.EquipmentName, new { htmlAttributes = new { @class = "form-control", @id = "EquipmentName", @readonly = "readonly" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Location.LocationName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Location.LocationName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.lst_mod_id, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._equipment.lst_mod_id, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.UserName } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.lst_mod_ts, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._equipment.lst_mod_ts, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.CurrentTime } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.row_sta_cd, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model._equipment.row_sta_cd, new List<SelectListItem>
+                     {
+                        new SelectListItem { Text = "Active", Value = "A", Selected = true},
+                        new SelectListItem { Text = "Obsolete", Value = "O"}
+                       }
+          , new { @class = "form-control" })
+            </div>
+        </div>
+        <br /><br />
+        <div class="form-group">
+            @if (Model._SE_Log.Task_Type_Id == "D")
+            {
+                <h4>Daily Tasks:</h4>
+            }
+            else if (Model._SE_Log.Task_Type_Id == "W")
+            {
+                <h4>Weekly Tasks:</h4>
+            }
+            else
+            {
+                <h4>Monthly Tasks</h4>
+            }
+
+            <ul id="ulQuestions" class="list-group">
+            </ul>
+        </div>
+
+        <br />
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="button" value="Cancel" class="btn btn-secondary" onclick="BackToPrevious();" />
+                <input type="submit" value="Update" class="btn btn-primary" onclick="return ValidateForm();" />
+            </div>
+        </div>
+    </div>
+}
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //make the health systems tab "active"
+            $("#tabEquipmentLogging").addClass("active");
+
+            //loop through add add the questions
+            var dbQA = '@Model._SE_Log.Tasks_QandA';
+            var questions = dbQA.split('|');
+            var ul = $('#ulQuestions');
+
+            for (var i = 0; i < questions.length - 1; i++) {
+                var answer = questions[i].split('^*^');
+                var html = '<li class="list-group-item d-flex justify-content-between align-items-center"><span>' + answer[0] + '</span>';
+                if (answer[1].includes('Not')) {
+                    html = html + '<span class="badge badge-danger badge-pill">' + answer[1] + '</span></li>';
+                }
+                else {
+                    html = html + '<span class="badge badge-primary badge-pill">' + answer[1] + '</span></li>';
+                }
+
+                $("#ulQuestions").append(html);
+            }
+        });
+
+        function ValidateForm() {
+            return true;
+        }
+
+        function BackToPrevious() {
+            var url = '@Html.Raw(Url.Action("Index", "Logging", new { iHealthSystemId = Model._HealthSystem.Id,
+                                                             iFacilityId = Model._Facility.Id,
+                                                             iLocationId = Model._Location.Id,
+                                                             iEquipmentId = Model._equipment.Id}))';
+            window.location = url;
+        }
+    </script>
+}

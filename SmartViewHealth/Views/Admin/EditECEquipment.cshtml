@@ -1,0 +1,476 @@
+﻿@model SmartViewHealth.Models.CreateECViewModel
+
+@using (Html.BeginForm("PutEditECEquipment", "Admin", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">@Html.ActionLink("Health Systems", "HealthSystems")</li>
+        <li class="breadcrumb-item">@Html.ActionLink("Facilities of " + @Model._HealthSystem.HealthSystemName, "Facilities", new { id = Model._Facility.HealthSystemID })</li>
+        <li class="breadcrumb-item">@Html.ActionLink("Locations of " + @Model._Facility.FacilityName, "Locations", new { id = Model._Facility.Id })</li>
+        <li class="breadcrumb-item">@Html.ActionLink("Equipment of " + @Model._Location.LocationName, "Equipment", new { id = Model._Location.Id })</li>
+        <li class="breadcrumb-item active">Edit @Model._Equipment.EquipmentName</li>
+    </ol>
+
+    @Html.HiddenFor(m => m._Equipment.Equipment_Type_Id, new { @Value = ViewBag.EquipmentTypeId })
+    @Html.HiddenFor(m => m._Location.Id)
+    @Html.HiddenFor(m => m._Equipment.Id)
+
+    <!-- Supplies Modal -->
+    <div class="modal fade" id="CreateSuppliesModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Supplies</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="iSupplyId" name="iSupplyId" value="">
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Supply Name</span>
+                        <div class="col-md-10">
+                            <input id="tbSupplyName" type="text" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Supply Qty</span>
+                        <div class="col-md-10">
+                            <input id="tbSupplyQty" type="text" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Active?</span>
+                        <div class="col-md-10">
+                            <select name="ddlSupplyRowStaCd" id="ddlSupplyRowStaCd" class="form-control">
+                                <option value="A">Active</option>
+                                <option value="O">Obsolete</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button id="btnSupplies" type="button" class="btn btn-primary" onclick="return CreateSupplies();">Add Supply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supplies Modal -->
+    <div class="modal fade" id="CreateMedsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Meds</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="iMedId" name="iMedId" value="">
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Med Name</span>
+                        <div class="col-md-10">
+                            <input id="tbMedName" type="text" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Unit of Issue</span>
+                        <div class="col-md-10">
+                            <input id="tbUOI" type="text" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Qty</span>
+                        <div class="col-md-10">
+                            <input id="tbQty" type="text" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Expiration Date</span>
+                        <div class="col-md-10">
+                            <input id="tbExpDate" type="text" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <span class="control-label col-md-2">Active?</span>
+                        <div class="col-md-10">
+                            <select name="ddlMedRowStaCd" id="ddlMedRowStaCd" class="form-control">
+                                <option value="A">Active</option>
+                                <option value="O">Obsolete</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button id="btnMeds" type="button" class="btn btn-primary" onclick="return CreateMeds();">Add Meds</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000" style="position: fixed; top: 4rem; right: 1rem; z-index: 1000000;">
+        <div class="toast-header">
+            <strong class="mr-auto">Field Validation</strong>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body">
+            <span id="toast-body-text">#</span>
+        </div>
+    </div>
+
+    <div class="form-horizontal">
+        <hr />
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.EquipmentName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment.EquipmentName, new { htmlAttributes = new { @class = "form-control", @id = "EquipmentName" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Location.LocationName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Location.LocationName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.lst_mod_id, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment.lst_mod_id, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.UserName } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.lst_mod_ts, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment.lst_mod_ts, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.CurrentTime } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.row_sta_cd, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model._Equipment.row_sta_cd, new List<SelectListItem>
+                     {
+                        new SelectListItem { Text = "Active", Value = "A", Selected = true},
+                        new SelectListItem { Text = "Obsolete", Value = "O"}
+                       }
+                 , new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group col-md-10">
+            <div style="display: flex; align-content:space-between; align-items: center; vertical-align: middle; padding-bottom: 5px;">
+                <div>
+                    <h3>Supplies</h3>
+                </div>
+                <div style="margin-left: auto;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="ShowSuppliesModal();">Add Supplies</button>
+                </div>
+            </div>
+            <div id="EC_Supplies_List" name="EC_Supplies_List">
+                @Html.Partial("EC_Supplies_List", Model._Equipment_EC_Supplies)
+            </div>
+        </div>
+
+        <div class="form-group col-md-10">
+            <div style="display: flex; align-content:space-between; align-items: center; vertical-align: middle; padding-bottom: 5px;">
+                <div>
+                    <h3>Meds</h3>
+                </div>
+                <div style="margin-left: auto;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="ShowMedsModal();">Add Meds</button>
+                </div>
+            </div>
+            <div id="EC_Meds_List" name="EC_Meds_List">
+                @Html.Partial("EC_Meds_List", Model._Equipment_EC_Meds)
+            </div>
+        </div>
+        <br /><br />
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="button" value="Cancel" class="btn btn-secondary" onclick="BackToPrevious();" />
+                <input type="submit" value="Update" class="btn btn-primary" onclick="return ValidateForm();" />
+            </div>
+        </div>
+
+    </div>
+}
+
+
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //make the health systems tab "active"
+            $("#tabHealthSystems").addClass("active");
+
+            var picker = new Pikaday({
+                field: document.getElementById('tbExpDate'),
+                format: 'D/M/YYYY',
+                toString(date, format) {
+                    // you should do formatting based on the passed format,
+                    // but we will just return 'D/M/YYYY' for simplicity
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1;
+                    const year = date.getFullYear();
+                    return `${month}/${day}/${year}`;
+                },
+                parse(dateString, format) {
+                    // dateString is the result of `toString` method
+                    const parts = dateString.split('/');
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const year = parseInt(parts[2], 10);
+                    return new Date(year, month, day);
+                }
+            });
+        });
+
+        function ValidateForm() {
+            var equipmentName = $("#EquipmentName").val();
+
+            if (equipmentName == '') {
+                $("#toast-body-text").text("Equipment Name is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+            if (equipmentName.length < 3) {
+                $("#toast-body-text").text("Equipment Name must be at least 3 characters long.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+            return true;
+        }
+
+        function ShowSuppliesModal() {
+            //clear fields
+            $("#tbSupplyName").val('');
+            $("#tbSupplyQty").val('');
+            $("#ddlSupplyRowStaCd").val('A');
+            $("#iSupplyId").val('');
+
+            //set button text
+            $('#btnSupplies').text('Add Supply');
+
+            $("#CreateSuppliesModal").modal();
+        }
+
+        function ShowEditSuppliesModal(iSupplyId, sSupplyName, iSupplyQty, sSupplyRowStaCd) {
+            //clear fields
+            $("#iSupplyId").val('');
+            $("#tbSupplyName").val('');
+            $("#tbSupplyQty").val('');
+            $("#ddlSupplyRowStaCd").val('A');
+
+            //set button text
+            $('#btnSupplies').text('Update Supply');
+
+            //populate fields
+            $("#iSupplyId").val(iSupplyId);
+            $("#tbSupplyName").val(sSupplyName);
+            $("#tbSupplyQty").val(iSupplyQty);
+            $("#ddlSupplyRowStaCd").val(sSupplyRowStaCd);
+
+            $("#CreateSuppliesModal").modal();
+        }
+
+        function CreateSupplies() {
+            //retrieve values
+            var iSupplyId = $("#iSupplyId").val();
+            var tbSupplyName = $("#tbSupplyName").val();
+            var tbSupplyQty = $("#tbSupplyQty").val();
+            var ddlSupplyRowStaCd = $("#ddlSupplyRowStaCd").val();
+
+            //add validation
+            if (tbSupplyName == '') {
+                $("#toast-body-text").text("Supply Name is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (tbSupplyName.length < 3) {
+                $("#toast-body-text").text("Supply Name must be at least 3 characters long.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (tbSupplyQty == '') {
+                $("#toast-body-text").text("Supply Qty is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (isNaN(tbSupplyQty)) {
+                $("#toast-body-text").text("Supply Qty must be a numeric value.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+
+            //add/edit logic
+            if (iSupplyId == '') {
+                iSupplyId = -1;
+            }
+
+            //turn fields into json
+            var jsonData = {
+                "Id": iSupplyId,
+                "Equipment_Parent_Id": "@Model._Equipment.Id",
+                "Supply_Name": tbSupplyName,
+                "Supply_Qty": tbSupplyQty,
+                "lst_mod_id": '@ViewBag.UserName',
+                "entry_user": '@ViewBag.UserName',
+                "lst_mod_ts": '@ViewBag.CurrentTime',
+                "entry_ts": '@ViewBag.CurrentTime',
+                "row_sta_cd": ddlSupplyRowStaCd,
+            };
+
+            $.ajax({
+                url: "@Url.Action("UpdateECEquipmentSupplies", "Admin")",
+                type: "POST",
+                data: '{ ecSupply: ' + JSON.stringify(jsonData) + '}',
+                dataType: 'HTML',
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    $("#CreateSuppliesModal").modal('toggle');
+                    $('#EC_Supplies_List').html(result);
+                },
+                error: function () {
+                    alert("Error while inserting data");
+                }
+            });
+        }
+
+        function ShowMedsModal() {
+            //clear fields
+            $("#iMedId").val('');
+            $("#tbMedName").val('');
+            $("#tbUOI").val('');
+            $("#tbQty").val('');
+            $("#tbExpDate").val('');
+            $("#ddlSupplyRowStaCd").val('A');
+
+            //set button text
+            $('#btnMeds').text('Add Med');
+
+            $("#CreateMedsModal").modal();
+        }
+
+        function ShowEditMedsModal(iMedId, sMedName, sUOI, sQty, sExpDate, sMedRowStaCd) {
+            //clear fields
+            $("#iMedId").val('');
+            $("#tbMedName").val('');
+            $("#tbUOI").val('');
+            $("#tbQty").val('');
+            $("#tbExpDate").val('');
+            $("#ddlSupplyRowStaCd").val('A');
+
+            //set button text
+            $('#btnMeds').text('Update Med');
+
+            //populate fields
+            $("#iMedId").val(iMedId);
+            $("#tbMedName").val(sMedName);
+            $("#tbUOI").val(sUOI);
+            $("#tbQty").val(sQty);
+
+            var date = new Date(sExpDate);
+            $("#tbExpDate").val((date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear());
+
+            $("#ddlSupplyRowStaCd").val(sMedRowStaCd);
+
+            $("#CreateMedsModal").modal();
+        }
+
+        function CreateMeds() {
+            //retrieve values
+            var iMedId = $("#iMedId").val();
+            var tbMedName = $("#tbMedName").val();
+            var tbUOI = $("#tbUOI").val();
+            var tbQty = $("#tbQty").val();
+            var tbExpDate = $("#tbExpDate").val();
+            var ddlMedRowStaCd = $("#ddlMedRowStaCd").val();
+
+            //add validation
+            if (tbMedName == '') {
+                $("#toast-body-text").text("Med Name is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (tbMedName.length < 3) {
+                $("#toast-body-text").text("Med Name must be at least 3 characters long.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (tbUOI == '') {
+                $("#toast-body-text").text("Med UOI is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (tbQty == '') {
+                $("#toast-body-text").text("Med Qty is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (isNaN(tbQty)) {
+                $("#toast-body-text").text("Med Qty must be a numeric value.");
+                $(".toast").toast('show');
+                return false;
+            }
+            if (tbExpDate == '') {
+                $("#toast-body-text").text("Med Expiration Date is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+
+            //add/edit logic
+            if (iMedId == '') {
+                iMedId = -1;
+            }
+
+            //turn fields into json
+            var jsonData = {
+                "Id": iMedId,
+                "Equipment_Parent_Id": "@Model._Equipment.Id",
+                "Med_Name": tbMedName,
+                "Med_UOI": tbUOI,
+                "Med_Qty": tbQty,
+                "Med_exp_dt": tbExpDate,
+                "lst_mod_id": '@ViewBag.UserName',
+                "entry_user": '@ViewBag.UserName',
+                "lst_mod_ts": '@ViewBag.CurrentTime',
+                "entry_ts": '@ViewBag.CurrentTime',
+                "row_sta_cd": ddlMedRowStaCd,
+            };
+
+            $.ajax({
+                url: "@Url.Action("UpdateECEquipmentMeds", "Admin")",
+                type: "POST",
+                data: '{ ecMed: ' + JSON.stringify(jsonData) + '}',
+                dataType: 'HTML',
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+                    $("#CreateMedsModal").modal('toggle');
+                    $('#EC_Meds_List').html(result);
+                },
+                error: function () {
+                    alert("Error while inserting data");
+                }
+            });
+        }
+
+        function BackToPrevious() {
+            var url = '@Url.Action("Equipment", "Admin", new { id = Model._Location.Id })';
+            window.location = url;
+        }
+    </script>
+}

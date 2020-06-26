@@ -1,0 +1,388 @@
+﻿@model SmartViewHealth.Models.LoggingViewModel
+    
+    <div class="modal fade" id="SEPromptModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Please select the type of log</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <select name="SETaskTypes" id="SETaskTypes" class="form-control">
+                        <option value="D">Daily</option>
+                        <option value="W">Weekly</option>
+                        <option value="M">Monthly</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="AddSELog();">Add Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container" style="display: flex; justify-content:space-between;">
+        <div class="row">
+            <div class="col-sm">
+                <h6>Health Systems:</h6>
+                <select class="form-control" id="ddlHealthSystems" onchange="GetFacilities(false);">
+                    @if (Model.lstHealthSystems.Count > 1)
+                    {
+                        <option value="-1">Please select a health system</option>
+                    }
+                    @foreach (var item in Model.lstHealthSystems)
+                    {
+                        <option value="@item.Id"> @item.HealthSystemName </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-sm">
+                <h6>Facilities:</h6>
+                <select class="form-control" id="ddlFacilities" onchange="GetLocations(false);">
+                    <option value="-1">Please select a Health System</option>
+                </select>
+            </div>
+
+            <div class="col-sm">
+                <h6>Locations:</h6>
+                <select class="form-control" id="ddlLocations" onchange="GetEquipment(false);">
+                    <option value="-1">Please select a Facility</option>
+                </select>
+            </div>
+
+            <div class="col-sm">
+                <h6>Equipment:</h6>
+                <select class="form-control" id="ddlEquipment" onchange="GetLogs(false);">
+                    <option value="-1">Please select a Location</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="EquipmentLogsGrid" style="margin-top: 10px;">
+        
+    </div>
+
+
+        @section scripts {
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    //make the health systems tab "active"
+                    $("#tabEquipmentLogging").addClass("active");
+
+                    if (@Model.peli.HealthSystemId > 0) {
+                        PreloadContent();
+                    }
+                    else {
+                        //disable dropdowns
+                        $("#ddlFacilities").attr('disabled', 'disabled');
+                        $("#ddlLocations").attr('disabled', 'disabled');
+                        $("#ddlEquipment").attr('disabled', 'disabled');
+
+                        //get faciliites
+                        GetFacilities();
+                    }
+                });
+
+                function PreloadContent() {
+
+                    //get health systems
+                    GetHealthSystems()
+                        .then(GetFacilities(true))
+                        .then(GetLocations(true))
+                        .then(GetEquipment(true))
+                        .then(GetLogs(true));
+
+                }
+
+                function GetHealthSystems() {
+                    return new Promise(resolve => {
+                        var hsId = @Model.peli.HealthSystemId;
+
+                        if (hsId > 0) {
+                            $.ajax({
+                                url: "@Url.Action("getHealthSystemsAssociatedToUserJson", "Logging")",
+                                type: "GET",
+                                dataType: 'json',
+                                contentType: 'application/json; charset=utf-8',
+                                success: function (data) {
+                                    var options = '';
+                                    var results = JSON.parse(data);
+
+                                    //clear dropdowns
+                                    $("#ddlHealthSystems").empty();
+
+                                    //enable drop down
+                                    $("#ddlHealthSystems").removeAttr('disabled');
+
+                                    //add initial option
+                                    if (results.length > 0) {
+                                        //add initial option
+                                        options = '<option value="' + -1 + '">Please select a health system</option>';
+                                    }
+                                    else {
+                                        options = '<option value="' + -1 + '">You are not associated to any health systems</option>';
+                                    }
+
+                                    //load all the facilities into the drop down
+                                    $.each(JSON.parse(data), function (index, value) {
+                                        // APPEND OR INSERT DATA TO SELECT ELEMENT.
+                                        options += '<option value="' + value.Id + '">' + value.HealthSystemName + '</option>';
+                                    });
+
+                                    $('#ddlHealthSystems').append(options);
+
+                                    //set selected value
+                                    $('#ddlHealthSystems').val(hsId);
+                                },
+                                error: function () {
+                                    alert("Error while retrieving data");
+                                }
+                            });
+                        }
+                        else {
+                            //disable other dropdowns
+                            $("#ddlLocations").attr('disabled', 'disabled');
+                            $("#ddlEquipment").attr('disabled', 'disabled');
+                        }
+                    });
+                }
+
+
+                function GetFacilities(bPreLoad) {
+                    return new Promise(resolve => {
+                        if (bPreLoad) {
+                            var hsId = @Model.peli.HealthSystemId;
+                        }
+                        else {
+                            var hsId = $("#ddlHealthSystems").val();
+                        }
+
+                        if (hsId > 0) {
+                            $.ajax({
+                                url: "@Url.Action("GetFacilities", "Logging")",
+                                type: "GET",
+                                data: { iHealthSystemId: hsId },
+                                dataType: 'json',
+                                contentType: 'application/json; charset=utf-8',
+                                success: function (data) {
+                                    var options = '';
+                                    var results = JSON.parse(data);
+
+                                    //clear dropdowns
+                                    $("#ddlFacilities").empty();
+
+                                    //enable drop down
+                                    $("#ddlFacilities").removeAttr('disabled');
+
+                                    //disable other dropdowns
+                                    if (!bPreLoad)
+                                    {
+                                        $("#ddlLocations").attr('disabled', 'disabled');
+                                        $("#ddlEquipment").attr('disabled', 'disabled');
+                                    }
+
+                                    //add initial option
+                                    if (results.length > 0) {
+                                        //add initial option
+                                        options = '<option value="' + -1 + '">Please select a facility</option>';
+                                    }
+                                    else {
+                                        options = '<option value="' + -1 + '">The health system you selected does not have any facilities.</option>';
+                                    }
+
+                                    //load all the facilities into the drop down
+                                    $.each(JSON.parse(data), function (index, value) {
+                                        // APPEND OR INSERT DATA TO SELECT ELEMENT.
+                                        options += '<option value="' + value.Id + '">' + value.FacilityName + '</option>';
+                                    });
+
+                                    $('#ddlFacilities').append(options);
+
+                                    if (bPreLoad) {
+                                        $('#ddlFacilities').val(@Model.peli.FacilityId)
+                                    }
+
+                                },
+                                error: function () {
+                                    alert("Error while retrieving data");
+                                }
+                            });
+                        }
+                        else {
+                            //disable other dropdowns
+                            $("#ddlLocations").attr('disabled', 'disabled');
+                            $("#ddlEquipment").attr('disabled', 'disabled');
+                        }
+                    });
+                }
+
+                function GetLocations(bPreLoad) {
+                    return new Promise(resolve => {
+                        if (bPreLoad) {
+                            var facId = @Model.peli.FacilityId;
+                        }
+                        else {
+                            var facId = $("#ddlFacilities").val();
+                        }
+
+                        if (facId > 0) {
+                            $.ajax({
+                                url: "@Url.Action("GetLocations", "Logging")",
+                                type: "GET",
+                                data: { iFacilityId: facId },
+                                dataType: 'json',
+                                contentType: 'application/json; charset=utf-8',
+                                success: function (data) {
+                                    var options = '';
+                                    var results = JSON.parse(data);
+
+                                    //clear dropdown
+                                    $("#ddlLocations").empty();
+
+                                    //enable drop down
+                                    $("#ddlLocations").removeAttr('disabled');
+
+                                    //disable other dropdowns
+                                    if (!bPreLoad)
+                                    {
+                                        $("#ddlEquipment").attr('disabled', 'disabled');
+                                    }
+
+
+                                    if (results.length > 0) {
+                                        //add initial option
+                                        options = '<option value="' + -1 + '">Please select a Location</option>';
+                                    }
+                                    else {
+                                        options = '<option style="background-color: #FF0000; color: #FFFFFF;" value="' + -1 + '">The Facility you selected does not have any locations.</option>';
+                                    }
+
+                                    //load all the locations into the drop down
+                                    $.each(results, function (index, value) {
+                                        // APPEND OR INSERT DATA TO SELECT ELEMENT.
+                                        options += '<option value="' + value.Id + '">' + value.LocationName + '</option>';
+                                    });
+
+                                    $('#ddlLocations').append(options);
+
+                                    if (bPreLoad) {
+                                        $('#ddlLocations').val(@Model.peli.LocationId);
+                                    }
+                                },
+                                error: function () {
+                                    alert("Error while retrieving data");
+                                }
+                            });
+                        }
+                        else {
+                            //disable other dropdowns
+                            $("#ddlLocations").attr('disabled', 'disabled');
+                            $("#ddlEquipment").attr('disabled', 'disabled');
+                        }
+                    });
+                }
+
+                function GetEquipment(bPreLoad) {
+                    return new Promise(resolve => {
+                        if (bPreLoad) {
+                            var locId = @Model.peli.LocationId;
+                        }
+                        else {
+                            var locId = $("#ddlLocations").val();
+                        }
+
+                        if (locId > 0) {
+                            $.ajax({
+                                url: "@Url.Action("GetEquipments", "Logging")",
+                                type: "GET",
+                                data: { iLocationId: locId },
+                                dataType: 'json',
+                                contentType: 'application/json; charset=utf-8',
+                                success: function (data) {
+                                    var options = '';
+                                    var results = JSON.parse(data);
+
+                                    //clear dropdown
+                                    $("#ddlEquipment").empty();
+
+                                    //enable drop down
+                                    $("#ddlEquipment").removeAttr('disabled');
+
+                                    if (results.length > 0) {
+                                        //add initial option
+                                        options = '<option value="' + -1 + '">Please select an Equipment</option>';
+                                    }
+                                    else {
+                                        options = '<option value="' + -1 + '">The Location you selected does not have any equipiment.</option>';
+                                    }
+
+                                    //load all the locations into the drop down
+                                    $.each(results, function (index, value) {
+                                        // APPEND OR INSERT DATA TO SELECT ELEMENT.
+                                        options += '<option value="' + value.Id + '">' + value.EquipmentName + '</option>';
+                                    });
+
+                                    $('#ddlEquipment').append(options);
+
+                                    if (bPreLoad) {
+                                        $('#ddlEquipment').val(@Model.peli.EquipmentId);
+                                    }
+                                },
+                                error: function () {
+                                    alert("Error while retrieving data");
+                                }
+                            });
+                        }
+                        else {
+                            $("#ddlFacilities").attr('disabled', 'disabled');
+                        }
+                    });
+                }
+
+                function GetLogs(bPreLoad) {
+                    return new Promise(resolve => {
+                        if (bPreLoad) {
+                            var eqId = @Model.peli.EquipmentId;
+                        }
+                        else {
+                            var eqId = $("#ddlEquipment").val();
+                        }
+
+                        if (eqId > 0) {
+                            $.ajax({
+                                url: "@Url.Action("GetEquipmentLogs", "Logging")",
+                                type: "GET",
+                                data: { iEquipmentId: eqId },
+                                dataType: 'html',
+                                contentType: 'application/json; charset=utf-8',
+                                success: function (data) {
+                                    $('#EquipmentLogsGrid').html(data);
+                                },
+                                error: function () {
+                                    alert("Error while retrieving data");
+                                }
+                            });
+                        }
+                    });
+                }
+
+                function SEPrompt() {
+                    $('#SEPromptModal').modal('show');
+                }
+
+                function AddSELog() {
+                    var eqId = $("#ddlEquipment").val();
+                    var ddlTypeId = $("#SETaskTypes").val();
+                    var url = '@Url.Action("CreateSELog", "Logging")?iEquipmentId=' + eqId + '&iTaskTypeId=' + ddlTypeId;
+                    window.location = url;
+                }
+
+
+            </script>
+        }

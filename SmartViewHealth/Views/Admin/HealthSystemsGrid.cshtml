@@ -1,0 +1,58 @@
+﻿@model SmartViewHealth.Models._HealthSystemViewModel
+
+    <div class="table-responsive-lg">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        Health System Name
+                    </th>
+                    <th>
+                        Last Updated By
+                    </th>
+                    <th>
+                        Last Updated Date
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model._HealthSystems)
+                {
+                    <tr>
+                        <td>
+                            @if (item.row_sta_cd == "A")
+                            {
+                                @Html.DisplayFor(modelItem => item.HealthSystemName)
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.HealthSystemName)
+                                <span class="badge badge-secondary">Obsolete</span>
+                            }
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.lst_mod_id)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.lst_mod_ts)
+                        </td>
+                        <td>
+                            @if (!User.IsInRole("Admin"))
+                            {
+                                @Html.ActionLink("Edit", "UnAuthorizedUser", "UnAuthorizedUser")
+                            }
+                            else
+                            {
+                                @Html.ActionLink("Edit", "EditHealthSystem", new { id = item.Id })
+                            }
+                            |
+                            @Html.ActionLink("Users", "HealthSystemUsers", "Users", new { id = item.Id }, "")
+                            |
+                            @Html.ActionLink("Facilites", "Facilities", new { id = item.Id })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>

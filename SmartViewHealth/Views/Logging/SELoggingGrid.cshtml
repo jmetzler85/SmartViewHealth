@@ -1,0 +1,74 @@
+﻿@model SmartViewHealth.Models.SEEquipmentViewModel
+
+<div style="display: flex; justify-content: flex-end; vertical-align: middle; padding-bottom: 5px;">
+    <input type="submit" value="Add Log" class="btn btn-primary" onclick="SEPrompt();" />
+</div>
+
+@if (Model.lstSELogs.Count > 0)
+{
+    <div class="table-responsive-lg">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        Log Type:
+                    </th>
+                    <th>
+                        In Compliance:
+                    </th>
+                    <th>
+                        Logged By:
+                    </th>
+                    <th>
+                        Logged On:
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.lstSELogs)
+                {
+                <tr>
+                    <td>
+                        @if(item.Task_Type_Id == "D")
+                        {
+                        <span>Daily</span>
+                        }
+                        else if(item.Task_Type_Id == "W")
+                        {
+                        <span>Weekly</span>
+                        }
+                        else {
+                        <span>Monthly</span>
+                        }
+
+                    </td>
+                    <td>
+                        @if (item.Tasks_RU_fg == "Y")
+                        {
+                            <span>Yes</span>
+                        }
+                        else
+                        {
+                            <span>No</span>
+                        }
+                    </td>
+                    <td>
+                        @item.lst_mod_id
+                    </td>
+                    <td>
+                        @item.lst_mod_ts.ToString("MM/dd/yyyy h:mm tt")
+                    </td>
+                    <td>
+                        @Html.ActionLink("Edit", "EditSELog", new { id = item.Id })
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <h5>@Model._equipment.EquipmentName does not have any logs.</h5>
+}

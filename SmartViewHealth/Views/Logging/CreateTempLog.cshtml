@@ -1,0 +1,170 @@
+﻿@model SmartViewHealth.Models.TempEquipmentViewModel
+
+
+@using (Html.BeginForm("PostTempLog", "Logging", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="ModalMessage" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Validation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <span id="mModalMessage"></span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="ConfirmNonCompliance" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Compliance</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <span id="msgConfirmCompliance"></span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Proceed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @Html.HiddenFor(m => m._equipment.Id)
+    @Html.HiddenFor(m => m._Location.Id)
+    @Html.HiddenFor(m => m._Facility.Id)
+    @Html.HiddenFor(m => m._HealthSystem.Id)
+
+
+
+
+    <div class="form-horizontal">
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.EquipmentName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._equipment.EquipmentName, new { htmlAttributes = new { @class = "form-control", @id = "EquipmentName", @readonly = "readonly" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Location.LocationName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Location.LocationName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <span class="control-label col-md-2">Temperature Value</span>
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.TempValue, new { htmlAttributes = new { @class = "form-control", @Value = "", @id = "TempLogValue" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.entry_user, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._equipment.entry_user, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.UserName } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.entry_ts, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._equipment.entry_ts, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.CurrentTime } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._equipment.row_sta_cd, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model._equipment.row_sta_cd, new List<SelectListItem>
+                     {
+                        new SelectListItem { Text = "Active", Value = "A", Selected = true},
+                        new SelectListItem { Text = "Obsolete", Value = "O"}
+                       }
+          , new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="button" value="Cancel" class="btn btn-secondary" onclick="BackToPrevious();" />
+                <input type="submit" value="Create Temp Log" class="btn btn-primary" onclick="return ValidateForm();" />
+            </div>
+        </div>
+    </div>
+}
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //make the health systems tab "active"
+            $("#tabEquipmentLogging").addClass("active");
+        });
+
+        function ValidateForm() {
+            var tbTempLogValue = $("#TempLogValue").val();
+
+            //remove text
+            $("#mModalMessage").text("");
+
+            if (tbTempLogValue == '') {
+                $("#mModalMessage").text("Temperature value is required.")
+                $('#ModalMessage').modal("show");
+                return false;
+            }
+
+            if (isNaN(tbTempLogValue)) {
+                $("#mModalMessage").text("Temperature value must be valid.")
+                $('#ModalMessage').modal("show");
+                return false;
+            }
+
+            if (@Model._equipment_temp.Temp_Range_Low != '' && !isNaN(@Model._equipment_temp.Temp_Range_Low) &&
+                @Model._equipment_temp.Temp_Range_High != '' && !isNaN(@Model._equipment_temp.Temp_Range_High)){
+
+                if (tbTempLogValue <= @Model._equipment_temp.Temp_Range_Low  || tbTempLogValue >= @Model._equipment_temp.Temp_Range_High) {
+                    $("#msgConfirmCompliance").text("Temperature value is outside of range (Low: " + @Model._equipment_temp.Temp_Range_Low + " - High: " + @Model._equipment_temp.Temp_Range_High + ").  Do you wish to proceed?");
+                    $('#ConfirmNonCompliance').modal("show");
+                    return false;
+                }
+
+            }
+
+
+            return true;
+        }
+
+        function BackToPrevious() {
+            //return RedirectToAction("Index", "Logging", new {
+            //    iHealthSystemId = tevm._HealthSystem.Id,
+            //    iFacilityId = tevm._Facility.Id,
+            //    iLocationId = tevm._Location.Id,
+            //    iEquipmentId = tevm._equipment.Id
+
+            var url = '@Html.Raw(Url.Action("Index", "Logging", new { iHealthSystemId = Model._HealthSystem.Id,
+                                                             iFacilityId = Model._Facility.Id,
+                                                             iLocationId = Model._Location.Id,
+                                                             iEquipmentId = Model._equipment.Id}))';
+            window.location = url;
+        }
+    </script>
+}

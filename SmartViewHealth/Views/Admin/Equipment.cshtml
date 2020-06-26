@@ -1,0 +1,153 @@
+﻿@model SmartViewHealth.Models._EquipmentsViewModel
+
+<ol class="breadcrumb">
+    <li class="breadcrumb-item">@Html.ActionLink("Health Systems", "HealthSystems")</li>
+    <li class="breadcrumb-item">@Html.ActionLink("Facilities of " + @Model._HealthSystem.HealthSystemName, "Facilities", new { id = Model._Facility.HealthSystemID })</li>
+    <li class="breadcrumb-item">@Html.ActionLink("Locations of " + @Model._Facility.FacilityName, "Locations", new { id = Model._Facility.Id })</li>
+    <li class="breadcrumb-item active">Equipment of @Model._Location.LocationName</li>
+</ol>
+
+<div style="display: flex; align-content:space-between; align-items: center; vertical-align: middle; padding-bottom: 5px;">
+
+    @using (Html.BeginForm("Equipment", "Admin", new { id = Model._Location.Id }))
+    {
+        <div style="display: flex; align-content:space-between; align-items: center; vertical-align: middle;">
+            <div>
+                <input type="text" class="form-control" placeholder="Search Equipment" id="txtSearch" name="searchString">
+            </div>
+            <div style="width: 5px;">
+            </div>
+            <div>
+                <input id="btnSearch" type="submit" value="Search" class="btn btn-primary" />
+            </div>
+            @if (ViewBag.ShowRefresh)
+            {
+                <div style="padding-left: 5px;">
+                    <input id="btnRefresh" type="submit" value="Refresh" class="btn btn-primary" onclick="ReloadPage(null);" />
+                </div>
+            }
+        </div>
+    }
+
+    <div style="width: 15px; margin-left: auto;">
+    </div>
+
+    <input type="submit" value="Create Equipment" class="btn btn-primary" data-toggle="modal" data-target="#CreateEquipmentModal" />
+
+    <!-- Modal -->
+    <div class="modal fade" id="CreateEquipmentModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Please select the type of equipment</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <select name="EquipmentTypes" id="EquipmentTypes" class="form-control">
+                        @foreach (var item in Model._EquipmentTypes)
+                        {
+                            <option value="@item.Id">@item.Equipment_Type_Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="CreateEquipment();">Create Equipment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="EquipmentGrid">
+    @Html.Partial("EquipmentGrid", Model)
+</div>
+
+<div class="custom-control custom-checkbox" style="padding-bottom: 5px;">
+    @if (ViewBag.bShowObsolete)
+    {
+        <input type="checkbox" class="custom-control-input" id="cbShowObsolete" onchange="ReloadPage(null);" checked>
+    }
+    else
+    {
+        <input type="checkbox" class="custom-control-input" id="cbShowObsolete" onchange="ReloadPage(null);">
+    }
+    <label class="custom-control-label" style="font-size: 10pt;" for="cbShowObsolete">Show Obsolete</label>
+</div>
+
+@if (Model.Pager != null)
+{
+    <div id="EquipmentPager">
+        @if (Model.Pager.EndPage > 1)
+        {
+            <ul class="pagination">
+                @if (Model.Pager.CurrentPage > 1)
+                {
+                    <li>
+                        <a class="page-link" href="javascript: ReloadPage(null);">First</a>
+                    </li>
+                    <li>
+                        <a class="page-link" href="javascript: ReloadPage(@(Model.Pager.CurrentPage - 1));">Previous</a>
+                    </li>
+                }
+
+                @for (var page = Model.Pager.StartPage; page <= Model.Pager.EndPage; page++)
+                {
+                    <li class="@(page == Model.Pager.CurrentPage ? "page-item active " : "page-item")">
+                        <a class="page-link" href="javascript: ReloadPage(@page);">@page</a>
+                    </li>
+                }
+
+                @if (Model.Pager.CurrentPage < Model.Pager.TotalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" href="javascript: ReloadPage(@(Model.Pager.CurrentPage + 1));">Next</a>
+                    </li>
+                    <li>
+                        <a class="page-link" href="javascript: ReloadPage(@(Model.Pager.TotalPages));">Last</a>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to Locations", "Locations", new { id = Model._Facility.Id })
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        function ReloadPage(page) {
+            var ShowObsolete = document.getElementById('cbShowObsolete').checked;
+            var url = '@Url.Action("Equipment", "Admin", new { id = Model._Location.Id })';
+            url = url + '?bShowObsolete=' + ShowObsolete;
+            if (page) {
+                url = url + '&page=' + page;
+            }
+            window.location = url;
+        }
+
+        $("#txtSearch").keypress(function (event) {
+            if (event.keyCode === 13) {
+                $("#btnSearch").click();
+            }
+        });
+
+        function CreateEquipment() {
+            var ddlTypeId = $("#EquipmentTypes").val();
+            var url = '@Url.Action("CreateEquipment", "Admin", new { id = Model._Location.Id })';
+            url = url + '?EquipmentType=' + ddlTypeId;
+            window.location = url;
+        }
+
+        $(document).ready(function () {
+            //make the health systems tab "active"
+            $("#tabHealthSystems").addClass("active");
+        });
+    </script>
+}
+

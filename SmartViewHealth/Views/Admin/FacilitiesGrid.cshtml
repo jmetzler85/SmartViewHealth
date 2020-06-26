@@ -1,0 +1,55 @@
+﻿@model SmartViewHealth.Models._FacilityContext
+
+    <div class="table-responsive-lg">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        Facility Name
+                    </th>
+                    <th>
+                        Health System Name
+                    </th>
+                    <th>
+                        Last Updated By
+                    </th>
+                    <th>
+                        Last Updated Date
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model._Facilities)
+                {
+                    <tr>
+                        <td>
+                            @if (item.row_sta_cd == "A")
+                            {
+                                @Html.DisplayFor(modelItem => item.FacilityName)
+                            }
+                            else
+                            {
+                                @Html.DisplayFor(modelItem => item.FacilityName)
+                                <span class="badge badge-secondary">Obsolete</span>
+                            }
+                        </td>
+                        <td>
+                            @Model._HealthSystem.HealthSystemName
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.lst_mod_id)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.lst_mod_ts)
+                        </td>
+                        <td>
+                            @Html.ActionLink("Edit", "EditFacility", new { id = item.Id })
+                            |
+                            @Html.ActionLink("Locations", "Locations", new { id = item.Id })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>

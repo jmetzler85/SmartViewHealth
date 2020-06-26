@@ -1,0 +1,160 @@
+﻿@model SmartViewHealth.Models.CreateTemperatureViewModel
+
+@using (Html.BeginForm("PutEditTempEquipment", "Admin", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">@Html.ActionLink("Health Systems", "HealthSystems")</li>
+        <li class="breadcrumb-item">@Html.ActionLink("Facilities of " + @Model._HealthSystem.HealthSystemName, "Facilities", new { id = Model._Facility.HealthSystemID })</li>
+        <li class="breadcrumb-item">@Html.ActionLink("Locations of " + @Model._Facility.FacilityName, "Locations", new { id = Model._Facility.Id })</li>
+        <li class="breadcrumb-item">@Html.ActionLink("Equipment of " + @Model._Location.LocationName, "Equipment", new { id = Model._Location.Id })</li>
+        <li class="breadcrumb-item active">Edit @Model._Equipment.EquipmentName</li>
+    </ol>
+
+    @Html.HiddenFor(m => m._Equipment.Equipment_Type_Id, new { @Value = ViewBag.EquipmentTypeId })
+    @Html.HiddenFor(m => m._Location.Id)
+    @Html.HiddenFor(m => m._Equipment.Id)
+    @Html.HiddenFor(m => m._Equipment_Temp.Id)
+
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="2000" style="position: fixed; top: 4rem; right: 1rem; z-index: 1000000;">
+        <div class="toast-header">
+            <strong class="mr-auto">Field Validation</strong>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body">
+            <span id="toast-body-text">#</span>
+        </div>
+    </div>
+
+    <div class="form-horizontal">
+        <hr />
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.EquipmentName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment.EquipmentName, new { htmlAttributes = new { @class = "form-control", @id = "EquipmentName" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Location.LocationName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Location.LocationName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment_Temp.Temp_Range_Low, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment_Temp.Temp_Range_Low, new { htmlAttributes = new { @class = "form-control", @id = "RangeLow", @style = "width: 80px;" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment_Temp.Temp_Range_High, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment_Temp.Temp_Range_High, new { htmlAttributes = new { @class = "form-control", @id = "RangeHigh", @style = "width: 80px;" } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment_Temp.Temp_Hour_Chk, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model._Equipment_Temp.Temp_Hour_Chk, new List<SelectListItem>
+                     {
+                        new SelectListItem { Text = "4 hours", Value = "4"},
+                        new SelectListItem { Text = "8 hours", Value = "8"},
+                        new SelectListItem { Text = "12 hours", Value = "12"},
+                        new SelectListItem { Text = "16 hours", Value = "16"},
+                        new SelectListItem { Text = "20 hours", Value = "20"},
+                        new SelectListItem { Text = "24 hours", Value = "24", Selected = true}
+                       }
+                 , new { @class = "form-control", @style = "width: 120px;" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.lst_mod_id, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment.lst_mod_id, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.UserName } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.lst_mod_ts, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model._Equipment.lst_mod_ts, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @Value = ViewBag.CurrentTime } })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model._Equipment.row_sta_cd, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model._Equipment.row_sta_cd, new List<SelectListItem>
+                     {
+                        new SelectListItem { Text = "Active", Value = "A", Selected = true},
+                        new SelectListItem { Text = "Obsolete", Value = "O"}
+                       }
+                 , new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="button" value="Cancel" class="btn btn-secondary" onclick="BackToPrevious();" />
+                <input type="submit" value="Update" class="btn btn-primary" onclick="return ValidateForm();" />
+            </div>
+        </div>
+
+    </div>
+}
+
+
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //make the health systems tab "active"
+            $("#tabHealthSystems").addClass("active");
+        });
+
+        function ValidateForm() {
+            var equipmentName = $("#EquipmentName").val();
+            var rangeLow = $("#RangeLow").val();
+            var rangeHigh = $("#RangeHigh").val();
+
+            if (equipmentName == '') {
+                $("#toast-body-text").text("Equipment Name is required.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+            if (equipmentName.length < 3) {
+                $("#toast-body-text").text("Equipment Name must be at least 3 characters long.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+            if (isNaN(rangeLow)) {
+                $("#toast-body-text").text("Range Low must be a valid number.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+            if (isNaN(rangeHigh)) {
+                $("#toast-body-text").text("Range High must be a valid number.");
+                $(".toast").toast('show');
+                return false;
+            }
+
+            return true;
+        }
+
+        function BackToPrevious() {
+            var url = '@Url.Action("Equipment", "Admin", new { id = Model._Location.Id })';
+            window.location = url;
+        }
+    </script>
+}

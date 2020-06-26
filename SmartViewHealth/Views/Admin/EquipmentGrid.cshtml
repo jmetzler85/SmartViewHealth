@@ -1,0 +1,59 @@
+﻿@model SmartViewHealth.Models._EquipmentsViewModel
+
+<div class="table-responsive-lg">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>
+                    Equipment Name
+                </th>
+                <th>
+                    Equipment Type
+                </th>
+                <th>
+                    Location Name
+                </th>
+                <th>
+                    Last Updated By
+                </th>
+                <th>
+                    Last Updated Date
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model._Equipments)
+            {
+                <tr>
+                    <td>
+                        @if (item.row_sta_cd == "A")
+                        {
+                            @Html.DisplayFor(modelItem => item.EquipmentName)
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(modelItem => item.EquipmentName)
+                            <span class="badge badge-secondary">Obsolete</span>
+                        }
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.EquipmentTypeName)
+                    </td>
+                    <td>
+                        @Model._Location.LocationName
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.lst_mod_id)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.lst_mod_ts)
+                    </td>
+                    <td>
+                        @Html.ActionLink("Edit", "EditEquipment", new { id = item.Id, EquipmentType = item.Equipment_Type_Id })
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
